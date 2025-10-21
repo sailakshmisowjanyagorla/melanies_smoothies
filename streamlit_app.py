@@ -20,7 +20,6 @@ my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT
 
 # Convert to Pandas for easier filtering
 pd_df = my_dataframe.to_pandas()
-# st.dataframe(pd_df)   # optional to view data
 
 # Dropdown to pick fruits
 ingredients_list = st.multiselect(
@@ -38,10 +37,17 @@ if ingredients_list:
         search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
         st.write(f"The search value for {fruit_chosen} is {search_on}.")
 
-        # Fetch API info using SEARCH_ON
-        st.subheader(fruit_chosen + ' Nutrition Information')
-        smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/{search_on}")
-        st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
+        # ✅ Fetch API info using SEARCH_ON correctly
+        st.subheader(f"{fruit_chosen} Nutrition Information")
+        try:
+            smoothiefroot_response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
+            
+            if smoothiefroot_response.status_code == 200:
+                st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
+            else:
+                st.warning(f"Sorry, '{fruit_chosen}' is not found in the Smoothie database.")
+        except Exception as e:
+            st.error(f"Error fetching data for {fruit_chosen}: {e}")
 
     # Save the order
     my_insert_stmt = f"""
